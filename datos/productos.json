@@ -1,0 +1,16 @@
+[
+    {
+        "codigo": "P1",
+        "nombre": "Hamburguesa",
+        "precio": 5.5,
+        "stock": 7,
+        "categoria": "General"
+    },
+    {
+        "codigo": "P001",
+        "nombre": "Encebollado",
+        "precio": 7.0,
+        "stock": 9,
+        "categoria": "General"
+    }
+]

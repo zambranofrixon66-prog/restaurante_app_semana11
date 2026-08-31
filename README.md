@@ -1,183 +1,129 @@
-# Sistema de restaurante con persistencia JSON
+Restaurante App - Semana 11
 
-## Estudiante
+Estudiante: Frixon Jeancarlos Zambrano Ortiz
+Asignatura: Programación Orientada a Objetos
+Semana: 11
 
-**Nombre:** Frixon Zambrano
+1. Descripción del Sistema
 
-## Descripción del proyecto
+Evolución de la aplicación modular de restaurante implementada en Python bajo el paradigma de Programación Orientada a Objetos (POO). El sistema incorpora relaciones entre entidades (Usuario, Producto y Venta), control de inventario (stock) y persistencia de datos en archivos JSON mediante un servicio centralizado de almacenamiento.
 
-Este proyecto presenta un sistema para administrar los productos y usuarios de un restaurante. Fue desarrollado con Programación Orientada a Objetos en Python y funciona mediante un menú interactivo en la consola.
+2. Estructura Modular del Proyecto
 
-El sistema permite registrar, buscar, actualizar, eliminar y listar productos. También permite registrar usuarios, consultar la lista de usuarios y mostrar las categorías utilizadas.
-
-En la Semana 10 se incorporó la persistencia de productos en formato JSON. Gracias a esta funcionalidad, los productos permanecen guardados después de cerrar el programa y se recuperan automáticamente al volver a ejecutarlo.
-
-## Objetivo
-
-Aplicar el manejo de archivos, la persistencia de datos, la reconstrucción de objetos y el control de excepciones dentro de un proyecto modular desarrollado con Programación Orientada a Objetos.
-
-## Estructura del proyecto
-
-```text
-restaurante_app/
-├── data/
-│   └── productos.json
+restaurante_app_semana11/
+├── datos/
+│   ├── productos.json
+│   ├── usuarios.json
+│   └── ventas.json
 ├── modelos/
 │   ├── __init__.py
+│   ├── bebida.py
+│   ├── cliente.py
 │   ├── producto.py
 │   ├── usuario.py
-│   ├── bebida.py
-│   └── cliente.py
+│   └── venta.py
 ├── servicios/
 │   ├── __init__.py
 │   ├── archivo_servicio.py
 │   └── restaurante.py
-├── main.py
 ├── .gitignore
+├── main.py
 └── README.md
-```
 
-Los archivos `bebida.py` y `cliente.py` se conservan como parte del trabajo realizado en las semanas anteriores.
+3. Responsabilidad de las Clases
 
-## Responsabilidad de los componentes
+Producto
 
-### Producto
+Representa los productos del restaurante. Almacena código, nombre, precio y stock. También permite verificar y reducir el stock después de una venta.
 
-Representa un producto del restaurante y almacena su código, nombre, categoría y precio. También permite convertir un producto en diccionario y reconstruirlo desde la información guardada en JSON.
+Usuario
 
-### Usuario
+Representa a los usuarios registrados. Almacena identificación, nombre y correo electrónico.
 
-Representa a una persona registrada en el sistema. Guarda su identificación, nombre y correo electrónico. En esta actividad los usuarios no se guardan en JSON porque la persistencia se aplica solamente a los productos.
+Venta
 
-### ArchivoServicio
+Representa una venta realizada. Relaciona un usuario con un producto y registra la cantidad vendida.
 
-Se encarga de leer y escribir el archivo `productos.json`. Utiliza `with open()`, `json.load()` y `json.dump()` para administrar la información.
+ArchivoServicio
 
-### Restaurante
+Se encarga de guardar y cargar la información de los archivos JSON.
 
-Administra las colecciones de productos y usuarios. Contiene las operaciones de registro, búsqueda, actualización, eliminación y listado. También solicita el guardado de los productos después de cada cambio.
+Restaurante
 
-### main.py
+Administra las colecciones de productos, usuarios y ventas. También realiza búsquedas, registros, ventas y consultas.
 
-Es el punto de inicio del programa. Presenta el menú, solicita los datos y conecta las opciones seleccionadas con los métodos de la clase `Restaurante`.
+4. Funcionalidades Principales
 
-## Estructuras de datos utilizadas
+Registrar Producto: Permite ingresar código, nombre, precio y stock inicial con validaciones.
 
-### Lista
+Listar Productos: Muestra el listado de productos con sus existencias actualizadas.
 
-Se utilizan listas para almacenar los productos y usuarios porque permiten agregar y eliminar objetos durante la ejecución.
+Registrar Usuario: Guarda la identificación, nombre y correo del usuario.
 
-### Tupla
+Listar Usuarios: Muestra todos los usuarios almacenados.
 
-Se utiliza una tupla para guardar las categorías permitidas: entrada, plato fuerte, postre y bebida.
+Realizar Venta: Verifica la existencia del usuario, el producto y el stock disponible, descuenta la cantidad vendida y registra la venta.
 
-### Diccionario
+Consultar Ventas por Usuario: Muestra el historial de compras asociadas a una identificación.
 
-Se utiliza un diccionario para relacionar el código de cada producto con su objeto. Esto permite realizar búsquedas rápidas mediante el código.
+Persistencia Automática: Carga los datos desde archivos JSON al iniciar y guarda los cambios realizados durante la ejecución.
 
-### Conjunto
+5. Persistencia JSON y Manejo de Rutas
 
-Se utilizan conjuntos para guardar categorías únicas y evitar identificaciones de usuarios duplicadas.
+Los datos se almacenan en la carpeta datos/.
 
-## Funcionalidades
+Se utilizan los archivos productos.json, usuarios.json y ventas.json.
 
-- Registrar productos
-- Buscar productos mediante su código
-- Actualizar productos
-- Eliminar productos
-- Listar los productos registrados
-- Registrar usuarios
-- Listar los usuarios registrados
-- Evitar códigos de productos duplicados
-- Evitar identificaciones de usuarios duplicadas
-- Mostrar las categorías utilizadas
-- Validar que los campos no estén vacíos
-- Validar que el precio sea numérico y mayor que cero
-- Guardar automáticamente los productos en JSON
-- Recuperar los productos al iniciar el programa
-- Manejar errores de lectura, escritura y formato JSON
+Se emplea la biblioteca estándar json para guardar y recuperar la información.
 
-## Persistencia de productos
+Las rutas se manejan mediante os.path.
 
-Los productos se guardan automáticamente en:
+El guardado se realiza con codificación UTF-8 e indentación de 4 espacios.
 
-```text
-data/productos.json
-```
+Los objetos se convierten en diccionarios mediante to_dict() y se reconstruyen mediante from_dict().
 
-Ejemplo del contenido del archivo:
+6. Manejo de Excepciones
 
-```json
-[
-    {
-        "codigo": "P001",
-        "nombre": "Encebollado",
-        "categoria": "Plato fuerte",
-        "precio": 3.5
-    }
-]
-```
+FileNotFoundError: Si un archivo JSON no existe, el sistema retorna una lista vacía sin interrumpir la ejecución.
 
-Cuando se inicia el programa, `ArchivoServicio` lee la información mediante `json.load()`. Después, cada diccionario se convierte nuevamente en un objeto de la clase `Producto`.
+json.JSONDecodeError: Se controla cuando un archivo JSON está vacío o contiene información inválida.
 
-El archivo se actualiza después de registrar, actualizar o eliminar un producto.
+PermissionError: Maneja problemas de permisos de lectura o escritura.
 
-## Manejo de excepciones
+ValueError: Controla valores inválidos en cantidades, precios, stock y campos obligatorios.
 
-El programa controla las siguientes excepciones:
+KeyError: Captura claves faltantes al reconstruir objetos desde los archivos JSON.
 
-- `FileNotFoundError`: cuando no existe `productos.json`
-- `JSONDecodeError`: cuando el archivo no contiene un JSON válido
-- `PermissionError`: cuando no existen permisos de lectura o escritura
-- `KeyError`: cuando falta un dato obligatorio
-- `ValueError`: cuando un valor no cumple las validaciones
-- `OSError`: cuando ocurre otro problema relacionado con el archivo
+7. Instrucciones de Ejecución
 
-Estos controles evitan que la aplicación se cierre inesperadamente y muestran mensajes comprensibles al usuario.
+Abrir la carpeta principal del proyecto en Visual Studio Code.
 
-## Menú del sistema
+Abrir una terminal en el directorio principal.
 
-```text
-1. Registrar producto
-2. Buscar producto
-3. Actualizar producto
-4. Eliminar producto
-5. Listar productos
-6. Registrar usuario
-7. Listar usuarios
-8. Mostrar categorías
-9. Salir
-```
+Ejecutar el comando:
 
-## Requisitos
-
-- Python 3.10 o superior
-- Visual Studio Code o cualquier editor compatible
-- No requiere instalar librerías externas
-
-## Ejecución del proyecto
-
-1. Abrir la carpeta principal del proyecto.
-2. Abrir una terminal.
-3. Ejecutar:
-
-```bash
 python main.py
-```
 
-4. Seleccionar una opción del menú y seguir las indicaciones.
+Seleccionar una opción del menú y seguir las indicaciones.
 
-## Pruebas realizadas
+8. Pruebas Realizadas
 
-1. Se registró el producto `P001`.
-2. Se comprobó que sus datos se guardaran en `productos.json`.
-3. Se cerró y se volvió a ejecutar el programa.
-4. Se verificó que el producto apareciera nuevamente.
-5. Se actualizó el nombre a `Encebollado mixto` y el precio a `$4.25`.
-6. Se reinició el programa y se comprobó que los cambios permanecieran.
-7. Se eliminó el producto.
-8. Se reinició el programa y se confirmó que ya no apareciera.
+Registro de producto: Se comprobó el registro de productos con código, nombre, precio y stock.
 
-## Conclusión
+Registro de usuario: Se verificó el almacenamiento de identificación, nombre y correo.
 
-Esta actividad permitió mejorar el sistema del restaurante mediante el uso de archivos JSON para conservar la información. El proyecto mantiene su organización modular y aplica validaciones, manejo de excepciones y reconstrucción de objetos. De esta manera, los productos permanecen disponibles aunque el programa se cierre y vuelva a ejecutarse.
+Bloqueo de duplicados: Se comprobó que no se permitan productos o usuarios repetidos.
+
+Venta con stock suficiente: Se verificó que la venta se registre y que el stock disminuya correctamente.
+
+Venta con stock insuficiente: Se comprobó que el sistema rechace la operación sin modificar el inventario.
+
+Consulta por usuario: Se verificó que se muestre correctamente el historial de ventas del usuario.
+
+Persistencia JSON: Se comprobó que productos, usuarios y ventas se guarden en sus respectivos archivos.
+
+Persistencia al reiniciar: Se cerró y volvió a ejecutar el programa para comprobar que los datos permanecieran almacenados.
+
+9. Conclusión
+
+La actividad permitió ampliar el sistema del restaurante mediante la incorporación del control de stock, el registro de ventas y la persistencia de productos, usuarios y ventas en archivos JSON. Además, se aplicaron relaciones entre objetos, validaciones y manejo de excepciones dentro de una estructura modular basada en Programación Orientada a Objetos.

@@ -1,92 +1,39 @@
 import json
-
-from modelos.producto import Producto
-
+import os
 
 class ArchivoServicio:
-    def __init__(self, ruta_archivo: str) -> None:
-        self.ruta_archivo = ruta_archivo
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    DATA_DIR = os.path.join(os.path.dirname(BASE_DIR), "datos")
 
-    def guardar_productos(self, productos: list) -> bool:
+    @classmethod
+    def _obtener_ruta(cls, nombre_archivo: str) -> str:
+        os.makedirs(cls.DATA_DIR, exist_ok=True)
+        return os.path.join(cls.DATA_DIR, nombre_archivo)
+
+    @classmethod
+    def guardar_json(cls, nombre_archivo: str, datos: list):
+        """Guarda una lista de diccionarios en formato JSON con indentación y UTF-8."""
+        ruta = cls._obtener_ruta(nombre_archivo)
         try:
-            datos = [
-                producto.a_diccionario()
-                for producto in productos
-            ]
-
-            with open(
-                self.ruta_archivo,
-                "w",
-                encoding="utf-8"
-            ) as archivo:
-                json.dump(
-                    datos,
-                    archivo,
-                    ensure_ascii=False,
-                    indent=4
-                )
-
-            return True
-
+            with open(ruta, "w", encoding="utf-8") as f:
+                json.dump(datos, f, indent=4, ensure_ascii=False)
         except PermissionError:
-            print("No se tienen permisos para guardar el archivo.")
-            return False
+            print(f"[Error de Permiso] No se tienen permisos para escribir en el archivo {nombre_archivo}.")
+        except Exception as e:
+            print(f"[Error inesperado al guardar {nombre_archivo}]: {e}")
 
-        except OSError as error:
-            print(f"No se pudo guardar la información: {error}")
-            return False
-
-    def cargar_productos(self) -> list:
+    @classmethod
+    def cargar_json(cls, nombre_archivo: str) -> list:
+        """Carga datos desde un archivo JSON controlando FileNotFoundError y JSONDecodeError."""
+        ruta = cls._obtener_ruta(nombre_archivo)
         try:
-            with open(
-                self.ruta_archivo,
-                "r",
-                encoding="utf-8"
-            ) as archivo:
-                datos = json.load(archivo)
-
-            if not isinstance(datos, list):
-                raise ValueError(
-                    "El contenido del archivo JSON debe ser una lista."
-                )
-
-            productos = []
-
-            for posicion, dato in enumerate(datos, start=1):
-                try:
-                    producto = Producto.desde_diccionario(dato)
-                    productos.append(producto)
-
-                except (KeyError, TypeError, ValueError) as error:
-                    print(
-                        f"El producto de la posición {posicion} "
-                        f"no pudo cargarse: {error}"
-                    )
-
-            return productos
-
+            with open(ruta, "r", encoding="utf-8") as f:
+                return json.load(f)
         except FileNotFoundError:
-            print(
-                "El archivo productos.json no existe. "
-                "Se iniciará con una lista vacía."
-            )
             return []
-
         except json.JSONDecodeError:
-            print(
-                "El archivo productos.json contiene un formato inválido. "
-                "Se iniciará con una lista vacía."
-            )
+            print(f"[Aviso] {nombre_archivo} tiene un formato JSON inválido o está vacío. Se inicia colección vacía.")
             return []
-
         except PermissionError:
-            print("No se tienen permisos para leer productos.json.")
-            return []
-
-        except ValueError as error:
-            print(f"Error en los datos guardados: {error}")
-            return []
-
-        except OSError as error:
-            print(f"No se pudo leer la información: {error}")
+            print(f"[Error de Permiso] No se tienen permisos para leer el archivo {nombre_archivo}.")
             return []

@@ -1,245 +1,115 @@
 from modelos.producto import Producto
 from modelos.usuario import Usuario
+from modelos.venta import Venta
 from servicios.archivo_servicio import ArchivoServicio
 
-
 class Restaurante:
-    def __init__(
-        self,
-        ruta_archivo: str = "data/productos.json"
-    ) -> None:
-        self.productos: list[Producto] = []
-        self.usuarios: list[Usuario] = []
+    def __init__(self):
+        self._productos: list[Producto] = []
+        self._usuarios: list[Usuario] = []
+        self._ventas: list[Venta] = []
+        self.cargar_datos()
 
-        self.productos_por_codigo: dict[str, Producto] = {}
+    @property
+    def productos(self) -> list[Producto]:
+        return self._productos
 
-        self.categorias_permitidas: tuple[str, ...] = (
-            "Entrada",
-            "Plato fuerte",
-            "Postre",
-            "Bebida"
-        )
+    @property
+    def usuarios(self) -> list[Usuario]:
+        return self._usuarios
 
-        self.categorias_registradas: set[str] = set()
-        self.identificaciones_usuarios: set[str] = set()
+    @property
+    def ventas(self) -> list[Venta]:
+        return self._ventas
 
-        self.archivo_servicio = ArchivoServicio(ruta_archivo)
-        self._cargar_productos()
+    def cargar_datos(self):
+        datos_prod = ArchivoServicio.cargar_json("productos.json")
+        self._productos = []
+        for p in datos_prod:
+            try:
+                self._productos.append(Producto.from_dict(p))
+            except (KeyError, ValueError) as e:
+                print(f"[Error al reconstruir producto]: {e}")
 
-    def _cargar_productos(self) -> None:
-        productos_guardados = (
-            self.archivo_servicio.cargar_productos()
-        )
+        datos_user = ArchivoServicio.cargar_json("usuarios.json")
+        self._usuarios = []
+        for u in datos_user:
+            try:
+                self._usuarios.append(Usuario.from_dict(u))
+            except (KeyError, ValueError) as e:
+                print(f"[Error al reconstruir usuario]: {e}")
 
-        for producto in productos_guardados:
-            codigo = producto.codigo.strip().upper()
-            categoria = self.normalizar_categoria(
-                producto.categoria
-            )
+        datos_vent = ArchivoServicio.cargar_json("ventas.json")
+        self._ventas = []
+        for v in datos_vent:
+            try:
+                self._ventas.append(Venta.from_dict(v))
+            except (KeyError, ValueError) as e:
+                print(f"[Error al reconstruir venta]: {e}")
 
-            if codigo in self.productos_por_codigo:
-                print(
-                    f"El producto con código {codigo} "
-                    "está repetido y no fue cargado."
-                )
-                continue
+    def guardar_productos(self):
+        ArchivoServicio.guardar_json("productos.json", [p.to_dict() for p in self._productos])
 
-            if categoria is None:
-                print(
-                    f"El producto {codigo} tiene una "
-                    "categoría no permitida."
-                )
-                continue
+    def guardar_usuarios(self):
+        ArchivoServicio.guardar_json("usuarios.json", [u.to_dict() for u in self._usuarios])
 
-            producto.codigo = codigo
-            producto.categoria = categoria
+    def guardar_ventas(self):
+        ArchivoServicio.guardar_json("ventas.json", [v.to_dict() for v in self._ventas])
 
-            self.productos.append(producto)
-            self.productos_por_codigo[codigo] = producto
-
-        self._actualizar_categorias()
-
-    def _guardar_productos(self) -> bool:
-        return self.archivo_servicio.guardar_productos(
-            self.productos
-        )
-
-    def normalizar_categoria(
-        self,
-        categoria: str
-    ) -> str | None:
-        for categoria_permitida in self.categorias_permitidas:
-            if (
-                categoria.strip().lower()
-                == categoria_permitida.lower()
-            ):
-                return categoria_permitida
-
+    def buscar_producto(self, codigo_producto: str) -> Producto | None:
+        for p in self._productos:
+            if p.codigo.lower() == str(codigo_producto).strip().lower():
+                return p
         return None
 
-    def registrar_producto(
-        self,
-        producto: Producto
-    ) -> bool:
-        codigo = producto.codigo.strip().upper()
-        categoria = self.normalizar_categoria(
-            producto.categoria
-        )
+    def buscar_usuario(self, identificacion_usuario: str) -> Usuario | None:
+        for u in self._usuarios:
+            if u.usuario_id.lower() == str(identificacion_usuario).strip().lower():
+                return u
+        return None
 
-        if codigo in self.productos_por_codigo:
+    def registrar_producto(self, codigo: str, nombre: str, precio: float, stock: int) -> bool:
+        if self.buscar_producto(codigo) is not None:
             return False
-
-        if categoria is None:
-            return False
-
-        producto.codigo = codigo
-        producto.categoria = categoria
-
-        self.productos.append(producto)
-        self.productos_por_codigo[codigo] = producto
-        self._actualizar_categorias()
-
-        if not self._guardar_productos():
-            self.productos.remove(producto)
-            del self.productos_por_codigo[codigo]
-            self._actualizar_categorias()
-            return False
-
+        nuevo_p = Producto(codigo, nombre, precio, stock)
+        self._productos.append(nuevo_p)
+        self.guardar_productos()
         return True
 
-    def buscar_producto(
-        self,
-        codigo: str
-    ) -> Producto | None:
-        codigo = codigo.strip().upper()
-        return self.productos_por_codigo.get(codigo)
-
-    def actualizar_producto(
-        self,
-        codigo: str,
-        nombre: str,
-        categoria: str,
-        precio: float
-    ) -> bool:
-        producto = self.buscar_producto(codigo)
-        categoria_normalizada = self.normalizar_categoria(
-            categoria
-        )
-
-        if producto is None:
+    def registrar_usuario(self, identificacion: str, nombre: str, correo: str = "") -> bool:
+        if self.buscar_usuario(identificacion) is not None:
             return False
-
-        if categoria_normalizada is None:
-            return False
-
-        producto_validado = Producto(
-            codigo=producto.codigo,
-            nombre=nombre,
-            categoria=categoria_normalizada,
-            precio=precio
-        )
-
-        datos_anteriores = (
-            producto.nombre,
-            producto.categoria,
-            producto.precio
-        )
-
-        producto.nombre = producto_validado.nombre
-        producto.categoria = producto_validado.categoria
-        producto.precio = producto_validado.precio
-        self._actualizar_categorias()
-
-        if not self._guardar_productos():
-            producto.nombre = datos_anteriores[0]
-            producto.categoria = datos_anteriores[1]
-            producto.precio = datos_anteriores[2]
-            self._actualizar_categorias()
-            return False
-
+        nuevo_u = Usuario(identificacion, nombre, correo)
+        self._usuarios.append(nuevo_u)
+        self.guardar_usuarios()
         return True
 
-    def eliminar_producto(
-        self,
-        codigo: str
-    ) -> bool:
-        producto = self.buscar_producto(codigo)
+    def vender_producto(self, codigo_producto: str, identificacion_usuario: str, cantidad: int) -> bool:
+        usuario = self.buscar_usuario(identificacion_usuario)
+        producto = self.buscar_producto(codigo_producto)
 
-        if producto is None:
+        if usuario is None or producto is None:
             return False
 
-        posicion = self.productos.index(producto)
-
-        self.productos.remove(producto)
-        del self.productos_por_codigo[producto.codigo]
-        self._actualizar_categorias()
-
-        if not self._guardar_productos():
-            self.productos.insert(posicion, producto)
-            self.productos_por_codigo[
-                producto.codigo
-            ] = producto
-            self._actualizar_categorias()
+        if cantidad <= 0 or not producto.hay_stock(cantidad):
             return False
 
-        return True
+        if producto.vender(cantidad):
+            nueva_venta = Venta(
+                usuario_id=usuario.usuario_id,
+                producto_codigo=producto.codigo,
+                cantidad=cantidad
+            )
+            self._ventas.append(nueva_venta)
+            self.guardar_ventas()
+            self.guardar_productos()
+            return True
 
-    def listar_productos(self) -> None:
-        if not self.productos:
-            print("No hay productos registrados.")
-            return
+        return False
 
-        print("\nLISTA DE PRODUCTOS")
-
-        for producto in self.productos:
-            print(producto.mostrar_informacion())
-
-    def registrar_usuario(
-        self,
-        usuario: Usuario
-    ) -> bool:
-        identificacion = usuario.identificacion.strip()
-
-        if identificacion in self.identificaciones_usuarios:
-            return False
-
-        usuario.identificacion = identificacion
-        self.usuarios.append(usuario)
-        self.identificaciones_usuarios.add(
-            identificacion
-        )
-        return True
-
-    def listar_usuarios(self) -> None:
-        if not self.usuarios:
-            print("No hay usuarios registrados.")
-            return
-
-        print("\nLISTA DE USUARIOS")
-
-        for usuario in self.usuarios:
-            print(usuario.mostrar_informacion())
-
-    def mostrar_categorias_permitidas(self) -> None:
-        print("Categorías permitidas:")
-
-        for categoria in self.categorias_permitidas:
-            print(f"- {categoria}")
-
-    def mostrar_categorias(self) -> None:
-        if not self.categorias_registradas:
-            print("No hay categorías registradas.")
-            return
-
-        print("\nCATEGORÍAS REGISTRADAS")
-
-        for categoria in sorted(
-            self.categorias_registradas
-        ):
-            print(f"- {categoria}")
-
-    def _actualizar_categorias(self) -> None:
-        self.categorias_registradas = {
-            producto.categoria
-            for producto in self.productos
-        }
+    def consultar_ventas_usuario(self, identificacion_usuario: str) -> list[Venta]:
+        ventas_usuario: list[Venta] = []
+        for venta in self._ventas:
+            if venta.usuario_id.lower() == str(identificacion_usuario).strip().lower():
+                ventas_usuario.append(venta)
+        return ventas_usuario

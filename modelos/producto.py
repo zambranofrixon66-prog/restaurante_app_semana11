@@ -1,59 +1,63 @@
 class Producto:
-    def __init__(
-        self,
-        codigo: str,
-        nombre: str,
-        categoria: str,
-        precio: float
-    ) -> None:
-        if not isinstance(codigo, str) or not codigo.strip():
-            raise ValueError("El código no puede estar vacío.")
+    def __init__(self, codigo: str, nombre: str, precio: float, stock: int = 0, categoria: str = "General"):
+        if not codigo or not nombre:
+            raise ValueError("El código y el nombre son obligatorios.")
 
-        if not isinstance(nombre, str) or not nombre.strip():
-            raise ValueError("El nombre no puede estar vacío.")
+        if float(precio) <= 0:
+            raise ValueError("El precio debe ser mayor a 0.")
 
-        if not isinstance(categoria, str) or not categoria.strip():
-            raise ValueError("La categoría no puede estar vacía.")
+        if int(stock) < 0:
+            raise ValueError("El stock no puede ser negativo.")
 
-        try:
-            precio = float(precio)
-        except (TypeError, ValueError):
-            raise ValueError("El precio debe ser un número válido.")
+        self.codigo = str(codigo).strip()
+        self.nombre = str(nombre).strip()
+        self.precio = float(precio)
+        self.stock = int(stock)
+        self.categoria = str(categoria).strip()
 
-        if precio <= 0:
-            raise ValueError("El precio debe ser mayor que cero.")
-
-        self.codigo = codigo.strip()
-        self.nombre = nombre.strip()
-        self.categoria = categoria.strip()
-        self.precio = precio
-
-    def mostrar_informacion(self) -> str:
-        return (
-            f"Código: {self.codigo} | "
-            f"Nombre: {self.nombre} | "
-            f"Categoría: {self.categoria} | "
-            f"Precio: ${self.precio:.2f}"
-        )
-
-    def a_diccionario(self) -> dict:
+    def to_dict(self) -> dict:
         return {
             "codigo": self.codigo,
             "nombre": self.nombre,
-            "categoria": self.categoria,
-            "precio": self.precio
+            "precio": self.precio,
+            "stock": self.stock,
+            "categoria": self.categoria
         }
 
-    @classmethod
-    def desde_diccionario(cls, datos: dict) -> "Producto":
+    @staticmethod
+    def from_dict(data: dict) -> "Producto":
         try:
-            return cls(
-                codigo=datos["codigo"],
-                nombre=datos["nombre"],
-                categoria=datos["categoria"],
-                precio=datos["precio"]
+            return Producto(
+                codigo=data["codigo"],
+                nombre=data["nombre"],
+                precio=float(data["precio"]),
+                stock=int(data.get("stock", 0)),
+                categoria=data.get("categoria", "General")
             )
-        except KeyError as error:
-            raise ValueError(
-                f"Falta el dato obligatorio: {error.args[0]}"
-            ) from error
+        except KeyError as e:
+            raise KeyError(f"Clave faltante en JSON de Producto: {e}")
+
+    def hay_stock(self, cantidad: int) -> bool:
+        return self.stock >= int(cantidad)
+
+    def reducir_stock(self, cantidad: int):
+        cantidad = int(cantidad)
+        if cantidad <= 0:
+            raise ValueError("La cantidad debe ser mayor a 0.")
+        if cantidad > self.stock:
+            raise ValueError("No hay suficiente stock disponible.")
+        self.stock -= cantidad
+
+    def vender(self, cantidad: int) -> bool:
+        if self.hay_stock(cantidad):
+            self.reducir_stock(cantidad)
+            return True
+        return False
+
+    def __str__(self) -> str:
+        return (
+            f"Código: {self.codigo} | "
+            f"Producto: {self.nombre} | "
+            f"Precio: ${self.precio:.2f} | "
+            f"Stock: {self.stock}"
+        )
