@@ -8,5 +8,10 @@
         "usuario_id": "0802637868",
         "producto_codigo": "P001",
         "cantidad": 11
+    },
+    {
+        "usuario_id": "0802637868",
+        "producto_codigo": "P001",
+        "cantidad": 3
     }
 ]
